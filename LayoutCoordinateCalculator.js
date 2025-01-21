@@ -92,8 +92,7 @@ export async function calculateAndApplyLayout() {
 
     // Print the graph in DOT format
     const dotOutput = g.to_dot();
-    console.log("Graph DOT representation:");
-    console.log(dotOutput);
+    
 
     // Set the correct Graphviz path
     try {
@@ -135,11 +134,8 @@ export async function calculateAndApplyLayout() {
     try {
         g.output("json", async (layout) => {
             
-            console.log('Inside g.output callback');
             const graph = JSON.parse(layout);
-            console.log("Graphviz JSON output:");
-            console.log(JSON.stringify(graph, null, 2));  // Pretty-print the JSON output for clarity
-    
+            
             // Find the maximum y-coordinate
             const maxY = Math.max(...graph.objects.map(node => parseFloat(node.pos.split(',')[1])));
             
@@ -164,8 +160,6 @@ export async function calculateAndApplyLayout() {
                 const pos = node.pos.split(',');
                 const x = parseFloat(pos[0]);
                 const y = (maxY - parseFloat(pos[1]));  // Invert y-coordinate
-                
-                console.log(`Setting coordinates for node ${node.name}: x=${x}, y=${y}, width=100, height=80`);
                 const bpmnNode = bpmnDoc.getElementById(node.name);
                 if (bpmnNode) {
                     let bpmnShape = null;
@@ -224,7 +218,7 @@ export async function calculateAndApplyLayout() {
                 const bpmnElementId = edge.id;
                 const processEdge = bpmnDoc.getElementById(bpmnElementId);
                 const bpmnEdgeId = `${bpmnElementId}_gui`; // Generate id for BPMNEdge
-                console.log(`Setting waypoints for edge ${bpmnEdgeId}`);
+                
                 let bpmnEdge = bpmnDoc.getElementById(bpmnEdgeId);
                 if (!bpmnEdge) {
                     bpmnEdge = bpmnDoc.createElement('bpmndi:BPMNEdge');
@@ -321,11 +315,11 @@ function correctedWaypointInsideNode(waypointCoor,sourceShapeElement,targetShape
 
 function findShapebyElementId(id) {
     const shapes = bpmnDoc.getElementsByTagName('bpmndi:BPMNShape');
-    console.log(`Searching for BPMN Shape with id=${id}`);
+    
     for (let i = 0; i < shapes.length; i++) {
-        console.log(`Checking BPMN Shape with id=${shapes[i].getAttribute('bpmnElement')}`);
+        
         if (shapes[i].getAttribute('bpmnElement') === id) {
-            console.log(`BPMN Shape found with id=${id}`);
+            
             return shapes[i];
         }
     }
