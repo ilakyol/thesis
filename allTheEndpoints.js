@@ -1,46 +1,53 @@
-//import fetch from 'node-fetch';
+const puppeteer = require('puppeteer');
+const { fetchDynamicHTML, fetchXML } = require('./browserTrial2.js');
 
-export async function getType(endpoint, endpoints) {
-  // Check if `endpoints` is an iterable list (e.g., NodeList or array-like)
-  if (endpoints && endpoints.length !== undefined) {
-      if (endpoints.length === 0) {
-          console.error('Endpoints NodeList is empty.');
-          return;
+async function main() {
+  const baseUrl = 'https://cpee.org/hub/?stage=development&dir=';
+  const browser = await puppeteer.launch();
+  const allTextNodes = new Set(); // Use a Set to store unique text nodes
+  const uniqueJsonObjects = new Set(); // Use a Set to track unique JSON strings
+  const jsonObjectStore = []; // Array to store unique JSON objects
+
+  try {
+    const rawHrefs = await fetchDynamicHTML(baseUrl, browser);
+    console.log('All Raw Hrefs:', rawHrefs); // Print all raw hrefs
+
+    for (const href of rawHrefs) {
+      const fullUrl = new URL(href, baseUrl).href;
+      console.log(`Fetching XML from: ${fullUrl}`);
+      let xmlDoc;
+      try {
+        xmlDoc = await fetchXML(fullUrl);
+      } catch (fetchError) {
+        console.error(`Error fetching XML from ${fullUrl}:`, fetchError.message);
+        continue; // Skip this iteration and move to the next URL
       }
-      endpoints = endpoints[0]; // Extract the first element
-  }
 
-  // Check if `endpoints` is defined and is an element node
-  console.log(endpoints);
-  console.log(endpoints.nodeType);
-  if (!endpoints || endpoints.nodeType !== 1) {
-      console.error('Endpoints is either undefined or is not an element node');
-      return;
-  }
+      if (!xmlDoc) {
+        console.warn(`Failed to fetch or parse XML from ${fullUrl}`);
+        continue;
+      }
 
-  // Convert `childNodes` to an array and filter for element nodes (nodeType === 1)
-  const endpointsChildren = Array.from(endpoints.childNodes).filter(child => child.nodeType === 1);
-  
-  if (endpointsChildren.length === 0) {
-      console.error('Endpoints has no element children.');
-      return;
-  }
-
-  // Iterate over the filtered children
-  for (const [index, child] of endpointsChildren.entries()) {
-    console.log(`Child ${index}: nodeName = ${child.nodeName}, localName = ${child.localName}, nodeType = ${child.nodeType}`);
-    
-    if (child.localName === endpoint) {
-        console.log(`Match found for node: ${child.localName}`);
-        let response = await getResponse(child.textContent);  // Await response to proceed sequentially
-        console.log('Response:', response);
-        return response;
+      // Process the XML document
+      const endpointsNode = xmlDoc.getElementsByTagName('endpoints')[0];
+      if (endpointsNode) {
+        const textNodes = [];
+        traverseNodes(endpointsNode, textNodes);
+        textNodes.forEach(textNode => allTextNodes.add(textNode)); // Add text nodes to the Set
+        console.log('Text nodes under <endpoints>:', textNodes);
+      } else {
+        console.warn(`No <endpoints> node found in ${fullUrl}`);
+      }
     }
+  } finally {
+    await browser.close();
   }
-}
 
-async function getResponse(rawUrl){
-  const encodedTextNode = encodeURIComponent(rawUrl);
+  const uniqueTextNodesArray = Array.from(allTextNodes); // Convert Set to Array if needed
+  console.log('All unique text nodes collected:', uniqueTextNodesArray); // Print all unique text nodes
+
+  for (const textNode of uniqueTextNodesArray) {
+    const encodedTextNode = encodeURIComponent(textNode);
     //is it correct?
     const jsonUrl = `https://cpee.org/flow/resources/endpoints/${encodedTextNode}/properties.json`;
     console.log(`Fetching JSON from: ${jsonUrl}`);
@@ -49,17 +56,26 @@ async function getResponse(rawUrl){
       const response = await fetchJSON(jsonUrl);
       if (response) {
         const jsonString = JSON.stringify(response);
-        return jsonString;
+        if (!uniqueJsonObjects.has(jsonString)) {
+          uniqueJsonObjects.add(jsonString);
+          jsonObjectStore.push(response);
+          console.log('Fetched and stored unique JSON:', response);
+        } else {
+          console.log('Duplicate JSON object skipped:', response);
+        }
       }
     } catch (error) {
-      return 'automatic';
+      console.error(`Error fetching JSON from ${jsonUrl}:`, error.message);
     }
+  }
+
+  console.log('All unique JSON objects:', jsonObjectStore);
 }
 
 async function fetchJSON(url) {
   try {
-    console.log(fetch(url));
-    const response = await fetch(url);
+    const fetch = await import('node-fetch'); // Dynamic import for ESM
+    const response = await fetch.default(url); // Use fetch.default because of dynamic import
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -89,3 +105,4 @@ function traverseNodes(node, textNodes) {
   }
 }
 
+main();
