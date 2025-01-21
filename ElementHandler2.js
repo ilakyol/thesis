@@ -5,7 +5,7 @@ import {generatePaddedUniqueId,generatePaddedUniqueSeqId} from './idGenerator.js
 import {getType} from './allTheEndpoints.js';
 import { error } from 'console';
 
-let bpmnDoc = null; // Module-level variable to store bpmnDoc
+let bpmnDoc = null; 
 let xmlDoc = null;
 const taskFilePath = './xmlFiles/task.xml';
 const scriptTaskFilePath = './xmlFiles/scriptTask.xml';
@@ -398,8 +398,6 @@ async function handleParallelBranch(node, indent, divergingID, convergingID,youa
             isLastChildFlag = true;
             if (result) {
                 const { divergingID: childDivergingID, convergingID: childConvergingID } = result;
-                console.log("Stored divergingID:", divergingID);
-                console.log("Stored convergingID:", convergingID);
                 previousNodeId = childConvergingID;
                 const outgoingSeqID = await addSequenceToBpmn(previousNodeId, convergingID);
                 const convergingGateway = await findParallelGatewayById(convergingID);
@@ -420,8 +418,6 @@ async function handleParallelBranch(node, indent, divergingID, convergingID,youa
             isLastChildFlag = true;
             if (result) {
                 const { divergingID: childDivergingID, convergingID: childConvergingID } = result;
-                console.log("Stored divergingID:", divergingID);
-                console.log("Stored convergingID:", convergingID);
                 previousNodeId = childConvergingID;
                 const outgoingSeqID = await addSequenceToBpmn(previousNodeId, convergingID);
                 const convergingGateway = await findParallelGatewayById(convergingID);
@@ -432,7 +428,6 @@ async function handleParallelBranch(node, indent, divergingID, convergingID,youa
                     incomingElement.appendChild(incomingText);
                     convergingGateway.appendChild(incomingElement);
                 }
-                // Use divergingID and convergingID as needed
             } else {
                 console.error("Error: handleParallel did not return a valid result.");
             }
@@ -441,7 +436,6 @@ async function handleParallelBranch(node, indent, divergingID, convergingID,youa
             const exitXorId = await handleLoop(node, indent+ '  ',true);
             isLastChildFlag = true;
             if (exitXorId) {
-                console.log("Stored exitXorId:", exitXorId);
                 previousNodeId = exitXorId;
                 const exitXOR = await findXORGatewayById(exitXorId);
                 const outgoingSeqID = await addSequenceToBpmn(previousNodeId, convergingID);
@@ -507,7 +501,7 @@ async function handleParallelBranch(node, indent, divergingID, convergingID,youa
     } else if(node.nodeName === 'stop'){
         addIntermediateCatchEvent('signal',"");
     }
-    isLastChildFlag = false; // Reset the flag after processing
+    isLastChildFlag = false; 
 }
 
 export async function handleDecision(node, indent,youarenested) {
@@ -613,8 +607,6 @@ async function handleDecisionBranch(node, indent, divergingID, convergingID,youa
             isLastChildFlag = true;
             if (result) {
                 const { divergingID: childDivergingID, convergingID: childConvergingID } = result;
-                console.log("Stored divergingID:", divergingID);
-                console.log("Stored convergingID:", convergingID);
                 previousNodeId = childConvergingID;
                 const outgoingSeqID = await addSequenceToBpmn(previousNodeId, convergingID);
                 const convergingGateway = await findParallelGatewayById(convergingID);
@@ -625,7 +617,7 @@ async function handleDecisionBranch(node, indent, divergingID, convergingID,youa
                     incomingElement.appendChild(incomingText);
                     convergingGateway.appendChild(incomingElement);
                 }
-                // Use divergingID and convergingID as needed
+                
             } else {
                 console.error("Error: handleParallel did not return a valid result.");
             }
@@ -658,7 +650,7 @@ async function handleDecisionBranch(node, indent, divergingID, convergingID,youa
             const exitXorId = await handleLoop(node, indent+ '  ',true);
             isLastChildFlag = true;
             if (exitXorId) {
-                console.log("Stored exitXorId:", exitXorId);
+    
                 previousNodeId = exitXorId;
                 const exitXOR = await findXORGatewayById(exitXorId);
                 const outgoingSeqID = await addSequenceToBpmn(previousNodeId, convergingID);
@@ -746,7 +738,6 @@ async function handleDecisionBranch(node, indent, divergingID, convergingID,youa
 }
 
 export async function handleCall(node, indent) {
-    console.log(`${indent}Handling call:`);
     const attributes = node.attributes;
     const endpoint = node.getAttribute('endpoint');
     let type;
@@ -759,7 +750,7 @@ export async function handleCall(node, indent) {
             addTaskToBpmn(node, 'automatic');
         }else if (types) {
             const parsedTypes = JSON.parse(types);
-            console.log('Parsed Task type received from getType:', parsedTypes);
+            
             if (parsedTypes.type) {
                 switch(parsedTypes.type){
                     case 'event':{
@@ -849,7 +840,7 @@ export async function handleManipulate(node, indent) {
 }
 
 export async function processEndpoints(node, indent) {
-    console.log(`${indent}Processing endpoints:`);
+    
     endpoints = node.getElementsByTagName('endpoints');
 }
 
@@ -859,8 +850,6 @@ async function addXORToBpmn(gatewayType) {
         if (!processNode) {
             throw new Error('<process> node not found in the BPMN document.');
         }
-
-        console.log('Appending diverging gateway to BPMN process node...');
         
         // Import the sequence node
         const importedNode = bpmnDoc.importNode(XORGatewayDoc.documentElement, true);
@@ -890,9 +879,6 @@ async function addXORToBpmn(gatewayType) {
         if (incoming) {
             incoming.textContent = previousSeqID;
         }
-
-        console.log(`Appended node: ${taskDoc.documentElement.nodeName}`);
-        console.log('Task nodes appended successfully.');
         return currentNodeID;
     } catch (error) {
         console.error('Error while adding task to BPMN:', error);
@@ -907,8 +893,6 @@ async function addDivergingToBpmn() {
             throw new Error('<process> node not found in the BPMN document.');
         }
 
-        console.log('Appending diverging gateway to BPMN process node...');
-        
         // Import the sequence node
         const importedNode = bpmnDoc.importNode(parallelGatewayDoc.documentElement, true);
         
@@ -928,8 +912,6 @@ async function addDivergingToBpmn() {
             incoming.textContent = previousSeqID;
         }
 
-        console.log(`Appended node: ${taskDoc.documentElement.nodeName}`);
-        console.log('Task nodes appended successfully.');
         return currentNodeID;
     } catch (error) {
         console.error('Error while adding task to BPMN:', error);
@@ -943,9 +925,6 @@ async function addConvergingToBpmn() {
         if (!processNode) {
             throw new Error('<process> node not found in the BPMN document.');
         }
-
-        console.log('Appending converging gateway to BPMN process node...');
-        
         // Import the sequence node
         const importedNode = bpmnDoc.importNode(parallelGatewayDoc.documentElement, true);
         
@@ -960,8 +939,6 @@ async function addConvergingToBpmn() {
         
         processNode.appendChild(importedNode);
 
-        console.log(`Appended node: ${taskDoc.documentElement.nodeName}`);
-        console.log('Task nodes appended successfully.');
         return currentNodeID;
     } catch (error) {
         console.error('Error while adding task to BPMN:', error);
@@ -969,7 +946,7 @@ async function addConvergingToBpmn() {
     }
 }
 
-// Utility function to get the first child element node
+//Function to get the first child element node
 function getLastChildElement(parentNode) {
     let child = parentNode.lastChild;
     while (child) {
@@ -996,7 +973,7 @@ function getNumberOfChildrenElements(parentNode) {
     
     return numberOfChildren;
 }
-// Utility function to get the first child element node
+// Function to get the first child element node
 function getFirstChildElement(parentNode) {
     let child = parentNode.firstChild;
     while (child) {
@@ -1011,25 +988,23 @@ function getFirstChildElement(parentNode) {
 
 async function findParallelGatewayById(id) {
     const parallelGateways = bpmnDoc.getElementsByTagName('parallelGateway');
-    console.log(`Searching for parallelGateway with id=${id}`);
+    
     for (let i = 0; i < parallelGateways.length; i++) {
-        console.log(`Checking parallelGateway with id=${parallelGateways[i].getAttribute('id')}`);
         if (parallelGateways[i].getAttribute('id') === id) {
             console.log(`parallelGateway found with id=${id}`);
             return parallelGateways[i];
         }
     }
-    console.log(`parallelGateway not found with id=${id}`);
     return null;
 }
 
 async function findXORGatewayById(id) {
     const xorGateways = bpmnDoc.getElementsByTagName('exclusiveGateway');
-    console.log(`Searching for parallelGateway with id=${id}`);
+   
     for (let i = 0; i < xorGateways.length; i++) {
-        console.log(`Checking xorGateway with id=${xorGateways[i].getAttribute('id')}`);
+        
         if (xorGateways[i].getAttribute('id') === id) {
-            console.log(`parallelGateway found with id=${id}`);
+            
             return xorGateways[i];
         }
     }
@@ -1039,9 +1014,9 @@ async function findXORGatewayById(id) {
 
 async function findSequenceFlowById(id) {
     const sequenceFlows = bpmnDoc.getElementsByTagName('sequenceFlow');
-    console.log(`Searching for sequenceFlow with id=${id}`);
+    
     for (let i = 0; i < sequenceFlows.length; i++) {
-        console.log(`Checking sequence flow with id=${sequenceFlows[i].getAttribute('id')}`);
+        
         if (sequenceFlows[i].getAttribute('id') === id) {
             console.log(`sequence flow found with id=${id}`);
             return sequenceFlows[i];
@@ -1057,8 +1032,6 @@ async function addSequenceToBpmn(from, to) {
         if (!processNode) {
             throw new Error('<process> node not found in the BPMN document.');
         }
-
-        console.log('Appending sequences to BPMN process node...');
         
         // Import the sequence node
         const importedNode = bpmnDoc.importNode(sequenceDoc.documentElement, true);
@@ -1076,9 +1049,6 @@ async function addSequenceToBpmn(from, to) {
         }
         // Append the imported node to the process node
         processNode.appendChild(importedNode);
-        
-        console.log(`Appended node: ${sequenceDoc.documentElement.nodeName}`);
-        console.log('Sequence nodes appended successfully.');
         
         return currentSeqID;
     } catch (error) {
@@ -1143,7 +1113,7 @@ export async function initializeStartEvent() {
             outgoing.textContent = outgoingSeqID;
         }
         previousNodeId = startEventId; // Set the previous node ID to the start event ID
-        console.log(`Initialized start event with ID: ${startEventId}`);
+        
     } else {
         console.error('<startEvent> tag not found in the BPMN document.');
     }
@@ -1162,7 +1132,7 @@ export async function setEndEvent() {
             incoming.textContent = previousSeqID;
         }
         previousNodeId = endEventId; // Set the previous node ID to the end event ID
-        console.log(`Set end event with ID: ${endEventId}`);
+       
     } else {
         console.error('<endEvent> tag not found in the BPMN document.');
     }
@@ -1175,8 +1145,6 @@ export async function addEndEvent() {
             throw new Error('<process> node not found in the BPMN document.');
         }
 
-        console.log('Appending diverging gateway to BPMN process node...');
-        
         // Import the sequence node
         const importedNode = bpmnDoc.importNode(endEventDoc.documentElement, true);
         
@@ -1203,8 +1171,6 @@ export async function addEndEvent() {
         // Append the new element as a child of <endEvent>
         importedNode.appendChild(terminateEventDef);
 
-        console.log(`Appended node: ${taskDoc.documentElement.nodeName}`);
-        console.log('Task nodes appended successfully.');
         return currentNodeID;
     } catch (error) {
         console.error('Error while adding task to BPMN:', error);
@@ -1219,8 +1185,6 @@ export async function addIntermediateCatchEvent(resource,label) {
             throw new Error('<process> node not found in the BPMN document.');
         }
 
-        console.log('Appending diverging gateway to BPMN process node...');
-        
         // Import the sequence node
         const importedNode = bpmnDoc.importNode(catchingIntermediateEventDoc.documentElement, true);
         
@@ -1277,8 +1241,6 @@ export async function addIntermediateCatchEvent(resource,label) {
         if(!isLastChildFlag){
             previousSeqID = addSequenceToBpmn(currentNodeID,nextNodeID);
         }
-        console.log(`Appended node: ${taskDoc.documentElement.nodeName}`);
-        console.log('Task nodes appended successfully.');
         return currentNodeID;
     } catch (error) {
         console.error('Error while adding task to BPMN:', error);
@@ -1351,7 +1313,7 @@ async function addTaskToBpmn(callNode,taskType) {
                 label = await getLabelTextFromCall(callNode);
                 idValue = callNode.getAttribute("id");
                 if(label!==null&&label!==''){
-                    importedNode.setAttribute('name',label);//idValue
+                    importedNode.setAttribute('name',label);//label
                 }else{
                     importedNode.setAttribute('name',idValue);//idValue
                 }
@@ -1365,13 +1327,12 @@ async function addTaskToBpmn(callNode,taskType) {
                 label = await getLabelTextFromCall(callNode);
                 idValue = callNode.getAttribute("id");
                 if(label!==null&&label!==''){
-                    importedNode.setAttribute('name',label);//idValue
+                    importedNode.setAttribute('name',label);//label
                 }else{
                     importedNode.setAttribute('name',idValue);//idValue
                 }
                 break;
         }
-        
         
         let currentNodeID = nextNodeID;
         importedNode.setAttribute('id', currentNodeID);
@@ -1398,8 +1359,7 @@ async function addTaskToBpmn(callNode,taskType) {
             
         }
         isLastChildFlag = false; // Reset the flag after skipping
-        console.log(`Appended node: ${taskDoc.documentElement.nodeName}`);
-        console.log('Task nodes appended successfully.');
+        
     } catch (error) {
         console.error('Error while adding task to BPMN:', error);
         throw error;
